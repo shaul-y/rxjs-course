@@ -1,6 +1,6 @@
-
 # Initializing a clean Angular Material Project
 
+s
 These are the commands and steps needed to scaffold a new Angular Material project from scratch,
 from an empty folder.
 
