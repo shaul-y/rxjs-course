@@ -1,117 +1,96 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, Subject, timer} from 'rxjs';
-import {Course} from '../model/course';
-import {delayWhen, filter, map, retryWhen, shareReplay, tap, withLatestFrom} from 'rxjs/operators';
-import {createHttpObservable} from './util';
-import {fromPromise} from 'rxjs/internal-compatibility';
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, Observable, Subject, timer } from "rxjs";
+import { Course } from "../model/course";
+import {
+  delayWhen,
+  filter,
+  map,
+  retryWhen,
+  shareReplay,
+  tap,
+  withLatestFrom
+} from "rxjs/operators";
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpClientModule
+} from "@angular/common/http";
 
+import { fromPromise } from "rxjs/internal-compatibility";
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: "root"
 })
-
-
 export class Store {
+  private subject = new BehaviorSubject<Course[]>([]);
 
-    private subject = new BehaviorSubject<Course[]>([]);
+  courses$: Observable<Course[]> = this.subject.asObservable();
 
-    courses$: Observable<Course[]> = this.subject.asObservable();
+  constructor(private http: HttpClient) {}
 
+  init() {
+    const httpOptions = {
+      headers: new HttpHeaders({
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      })
+    };
 
-    init() {
+    const http$ = this.http.get<Course[]>(
+      "http://localhost:9000/api/courses",
+      httpOptions
+    );
+    http$
+      .pipe(
+        tap(() => console.log("HTTP request executed")),
+        map(res => Object.values(res["payload"]))
+      )
+      .subscribe((courses: Course[]) => this.subject.next(courses));
+  }
 
-        const http$ = createHttpObservable('/api/courses');
+  selectBeginnerCourses() {
+    return this.filterByCategory("BEGINNER");
+  }
 
-        http$
-            .pipe(
-                tap(() => console.log('HTTP request executed')),
-                map(res => Object.values(res['payload']))
-            )
-            .subscribe(
-                courses => this.subject.next(courses)
-            );
-    }
+  selectAdvancedCourses() {
+    return this.filterByCategory("ADVANCED");
+  }
 
-    selectBeginnerCourses() {
-        return this.filterByCategory('BEGINNER');
-    }
+  selectCourseById(courseId: number) {
+    return this.courses$.pipe(
+      map(courses => courses.find(course => course.id == courseId)),
+      filter(course => !!course)
+    );
+  }
 
-    selectAdvancedCourses() {
-        return this.filterByCategory('ADVANCED');
-    }
+  filterByCategory(category: string) {
+    return this.courses$.pipe(
+      map(courses => courses.filter(course => course.category == category))
+    );
+  }
 
-    selectCourseById(courseId:number) {
-        return this.courses$
-            .pipe(
-                map(courses => courses.find(course => course.id == courseId)),
-                filter(course => !!course)
+  saveCourse(courseId: number, changes): Observable<any> {
+    const courses = this.subject.getValue();
 
-            );
-    }
+    const courseIndex = courses.findIndex(course => course.id == courseId);
 
-    filterByCategory(category: string) {
-        return this.courses$
-            .pipe(
-                map(courses => courses
-                    .filter(course => course.category == category))
-            );
-    }
+    const newCourses = courses.slice(0);
 
-    saveCourse(courseId:number, changes): Observable<any> {
+    newCourses[courseIndex] = {
+      ...courses[courseIndex],
+      ...changes
+    };
 
-        const courses = this.subject.getValue();
+    this.subject.next(newCourses);
 
-        const courseIndex = courses.findIndex(course => course.id == courseId);
-
-        const newCourses = courses.slice(0);
-
-        newCourses[courseIndex] = {
-            ...courses[courseIndex],
-            ...changes
-        };
-
-        this.subject.next(newCourses);
-
-        return fromPromise(fetch(`/api/courses/${courseId}`, {
-            method: 'PUT',
-            body: JSON.stringify(changes),
-            headers: {
-                'content-type': 'application/json'
-            }
-        }));
-
-    }
-
-
-
-
-
+    return fromPromise(
+      fetch(`/api/courses/${courseId}`, {
+        method: "PUT",
+        body: JSON.stringify(changes),
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

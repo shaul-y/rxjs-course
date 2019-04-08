@@ -5,9 +5,8 @@
     "baseUrl": "./",
     "module": "es2015",
     "types": []
+    //"resolveJsonModule": true,
+    //"esModuleInterop": true
   },
-  "exclude": [
-    "test.ts",
-    "**/*.spec.ts"
-  ]
+  "exclude": ["test.ts", "**/*.spec.ts"]
 }

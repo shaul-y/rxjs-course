@@ -1,38 +1,45 @@
-import {Observable} from 'rxjs';
+import { Observable } from "rxjs";
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpClientModule
+} from "@angular/common/http";
 
+export function createHttpObservable(url: string) {
+  let headers = new HttpHeaders();
+  headers.append("Content-Type", "application/json");
+  headers.append("'Access-Control-Allow-Origin", `*`);
 
-export function createHttpObservable(url:string) {
-    return Observable.create(observer => {
+  return this.http.get(url, headers);
+  // return Observable.create(observer => {
 
-        const controller = new AbortController();
-        const signal = controller.signal;
+  //     const controller = new AbortController();
+  //     const signal = controller.signal;
 
-        fetch(url, {signal})
-            .then(response => {
+  //     fetch(url, {signal})
+  //         .then(response => {
 
-                if (response.ok) {
-                    return response.json();
-                }
-                else {
-                    observer.error('Request failed with status code: ' + response.status);
-                }
-            })
-            .then(body => {
+  //             if (response.ok) {
+  //                 return response.json();
+  //             }
+  //             else {
+  //                 observer.error('Request failed with status code: ' + response.status);
+  //             }
+  //         })
+  //         .then(body => {
 
-                observer.next(body);
+  //             observer.next(body);
 
-                observer.complete();
+  //             observer.complete();
 
-            })
-            .catch(err => {
+  //         })
+  //         .catch(err => {
 
-                observer.error(err);
+  //             observer.error(err);
 
-            });
+  //         });
 
-        return () => controller.abort()
+  //     return () => controller.abort()
 
-
-    });
+  // });
 }
-
